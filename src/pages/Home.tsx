@@ -2,7 +2,8 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
-import { Mic, MicOff, Volume2, VolumeX } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Mic, MicOff, Volume2, VolumeX, Send } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { VoiceRecognition, TextToSpeech } from '@/utils/voice';
 import { sendToGemini, getSystemPrompt, Message } from '@/utils/gemini';
@@ -17,6 +18,7 @@ const Home: React.FC = () => {
   const [isProcessing, setIsProcessing] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
   const [currentSubtitle, setCurrentSubtitle] = useState('');
+  const [textInput, setTextInput] = useState('');
 
   const voiceRecognition = useRef(new VoiceRecognition());
   const tts = useRef(new TextToSpeech());
@@ -79,6 +81,8 @@ const Home: React.FC = () => {
   };
 
   const handleVoiceInput = async () => {
+    setTextInput('');
+
     if (isListening) {
       await voiceRecognition.current.stop();
       setIsListening(false);
@@ -105,6 +109,15 @@ const Home: React.FC = () => {
         setCurrentSubtitle('');
       }
     );
+  };
+
+  const handleTextSubmit = async (e?: React.FormEvent) => {
+    e?.preventDefault();
+    if (textInput.trim() === '' || isProcessing || isListening || isSpeaking) return;
+
+    const content = textInput;
+    setTextInput('');
+    await processInput(content);
   };
 
   const toggleSpeaker = async () => {
@@ -146,12 +159,31 @@ const Home: React.FC = () => {
             )}
           </div>
 
-          <div className="flex flex-col items-center gap-6 pb-12">
+          <div className="flex flex-col items-center gap-6 pb-12 w-full max-w-md px-4">
+            <form onSubmit={handleTextSubmit} className="flex items-center gap-2 w-full">
+              <Input
+                type="text"
+                placeholder="Type your message..."
+                value={textInput}
+                onChange={(e) => setTextInput(e.target.value)}
+                disabled={isProcessing || isListening || isSpeaking}
+                className="flex-1 p-3 text-base bg-card/50 backdrop-blur-sm"
+              />
+              <Button
+                type="submit"
+                size="icon"
+                disabled={textInput.trim() === '' || isProcessing || isListening || isSpeaking}
+                className="h-10 w-10"
+              >
+                <Send className="h-5 w-5" />
+              </Button>
+            </form>
+
             <div className="flex items-center justify-center gap-6">
               <Button
                 size="lg"
                 onClick={handleVoiceInput}
-                disabled={isProcessing || isSpeaking}
+                disabled={isProcessing || isSpeaking || textInput.length > 0}
                 className={`h-24 w-24 rounded-full transition-all ${
                   isListening
                     ? 'bg-destructive hover:bg-destructive shadow-voice-glow animate-pulse'
