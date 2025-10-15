@@ -2,9 +2,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Mic, MicOff, Volume2, VolumeX, Loader2, Send } from 'lucide-react';
+import { Mic, MicOff, Volume2, VolumeX } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { VoiceRecognition, TextToSpeech } from '@/utils/voice';
 import { sendToGemini, getSystemPrompt, Message } from '@/utils/gemini';
@@ -18,20 +16,10 @@ const Home: React.FC = () => {
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
-  const [currentTranscript, setCurrentTranscript] = useState('');
-  const [textInput, setTextInput] = useState('');
+  const [currentSubtitle, setCurrentSubtitle] = useState('');
 
   const voiceRecognition = useRef(new VoiceRecognition());
   const tts = useRef(new TextToSpeech());
-  const messagesEndRef = useRef<HTMLDivElement>(null);
-
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  };
-
-  useEffect(() => {
-    scrollToBottom();
-  }, [messages, currentTranscript]);
 
   useEffect(() => {
     const checkAvailability = async () => {
@@ -54,6 +42,8 @@ const Home: React.FC = () => {
     setMessages(prev => [...prev, userMessage]);
 
     setIsProcessing(true);
+    setCurrentSubtitle('Processing...');
+    
     try {
       const systemPrompt = getSystemPrompt(
         student?.name || '',
@@ -67,9 +57,13 @@ const Home: React.FC = () => {
       const assistantMessage: Message = { role: 'assistant', content: response };
       setMessages(prev => [...prev, assistantMessage]);
 
+      setIsProcessing(false);
+      setCurrentSubtitle(response);
       setIsSpeaking(true);
+      
       await tts.current.speak(response, () => {
         setIsSpeaking(false);
+        setCurrentSubtitle('');
       });
     } catch (error) {
       toast({
@@ -78,32 +72,28 @@ const Home: React.FC = () => {
         variant: 'destructive',
       });
       console.error('Error:', error);
+      setCurrentSubtitle('');
     } finally {
       setIsProcessing(false);
-      if (isSpeaking) {
-          setIsSpeaking(false);
-      }
     }
   };
 
   const handleVoiceInput = async () => {
-    setTextInput('');
-
     if (isListening) {
       await voiceRecognition.current.stop();
       setIsListening(false);
+      setCurrentSubtitle('');
       return;
     }
 
     setIsListening(true);
-    setCurrentTranscript('');
+    setCurrentSubtitle('Listening...');
 
     await voiceRecognition.current.start(
       async (transcript) => {
         setIsListening(false);
-        setCurrentTranscript(transcript);
+        setCurrentSubtitle(transcript);
         await processInput(transcript);
-        setCurrentTranscript('');
       },
       (error) => {
         setIsListening(false);
@@ -112,151 +102,96 @@ const Home: React.FC = () => {
           description: `Voice recognition error: ${error}`,
           variant: 'destructive',
         });
-        setCurrentTranscript('');
+        setCurrentSubtitle('');
       }
     );
-  };
-
-  const handleTextSubmit = async (e?: React.FormEvent) => {
-    e?.preventDefault();
-    if (textInput.trim() === '' || isProcessing || isListening || isSpeaking) return;
-
-    const content = textInput;
-    setTextInput('');
-    await processInput(content);
   };
 
   const toggleSpeaker = async () => {
     if (isSpeaking) {
       await tts.current.stop();
       setIsSpeaking(false);
+      setCurrentSubtitle('');
     }
   };
 
   return (
     <Layout>
-      <div className="h-[calc(100vh-4rem)] flex flex-col p-4">
-        <div className="text-center mb-6">
-          <h2 className="text-2xl font-bold text-foreground mb-1">
-            Welcome, {student?.name}!
-          </h2>
-          <p className="text-muted-foreground text-sm">
-            Your AI-powered campus assistant
-          </p>
-        </div>
+      <div className="h-screen w-screen fixed inset-0 overflow-hidden bg-gradient-to-br from-background via-primary/20 to-accent/20 animate-gradient">
+        <div className="absolute inset-0 bg-gradient-to-tr from-primary/30 via-transparent to-accent/30 animate-gradient-shift" />
+        
+        <div className="relative h-full flex flex-col items-center justify-center p-6">
+          <div className="absolute top-8 left-0 right-0 text-center">
+            <h2 className="text-2xl font-bold text-foreground mb-1">
+              {student?.name}
+            </h2>
+            <p className="text-muted-foreground text-sm">
+              Campus Assistant
+            </p>
+          </div>
 
-        <Card className="flex-1 bg-transparent p-4 mb-4 overflow-y-auto">
-          {messages.length === 0 && !currentTranscript ? (
-            <div className="h-full flex items-center justify-center text-center">
-              <div className="space-y-2">
-                <p className="text-muted-foreground">
-                  Type or tap the microphone to start a conversation 💬
-                </p>
-                <p className="text-sm text-muted-foreground">
-                  Ask me about classes, events, facilities, or campus tours!
+          <div className="flex-1 flex items-center justify-center w-full max-w-2xl px-4">
+            {currentSubtitle ? (
+              <div className="text-center space-y-4 animate-fade-in">
+                <p className="text-2xl md:text-4xl font-medium text-foreground leading-relaxed">
+                  {currentSubtitle}
                 </p>
               </div>
+            ) : (
+              <div className="text-center space-y-4">
+                <p className="text-lg text-muted-foreground">
+                  Tap the microphone to start
+                </p>
+              </div>
+            )}
+          </div>
+
+          <div className="flex flex-col items-center gap-6 pb-12">
+            <div className="flex items-center justify-center gap-6">
+              <Button
+                size="lg"
+                onClick={handleVoiceInput}
+                disabled={isProcessing || isSpeaking}
+                className={`h-24 w-24 rounded-full transition-all ${
+                  isListening
+                    ? 'bg-destructive hover:bg-destructive shadow-voice-glow animate-pulse'
+                    : 'bg-gradient-accent hover:opacity-90'
+                }`}
+              >
+                {isListening ? (
+                  <MicOff className="h-10 w-10" />
+                ) : (
+                  <Mic className="h-10 w-10" />
+                )}
+              </Button>
+
+              <Button
+                size="lg"
+                variant="outline"
+                onClick={toggleSpeaker}
+                disabled={!isSpeaking}
+                className="h-20 w-20 rounded-full border-2"
+              >
+                {isSpeaking ? (
+                  <Volume2 className="h-7 w-7 text-accent animate-pulse" />
+                ) : (
+                  <VolumeX className="h-7 w-7" />
+                )}
+              </Button>
             </div>
-          ) : (
-            <div className="space-y-4">
-              {messages.map((message, index) => (
-                <div
-                  key={index}
-                  className={`flex ${
-                    message.role === 'user' ? 'justify-end' : 'justify-start'
-                  }`}
-                >
-                  <div
-                    className={`max-w-[80%] p-3 rounded-2xl ${
-                      message.role === 'user'
-                        ? 'bg-primary text-primary-foreground'
-                        : 'bg-secondary text-foreground'
-                    }`}
-                  >
-                    <p className="text-sm">{message.content}</p>
-                  </div>
-                </div>
-              ))}
-              {currentTranscript && (
-                <div className="flex justify-end">
-                  <div className="max-w-[80%] p-3 rounded-2xl bg-primary/50 text-primary-foreground">
-                    <p className="text-sm italic">{currentTranscript}</p>
-                  </div>
-                </div>
+
+            <div className="text-center min-h-[28px]">
+              {isListening && (
+                <p className="text-accent text-lg font-medium animate-pulse">Listening...</p>
               )}
               {isProcessing && (
-                <div className="flex justify-start">
-                  <div className="max-w-[80%] p-3 rounded-2xl bg-secondary text-foreground">
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                  </div>
-                </div>
+                <p className="text-primary text-lg font-medium">Processing...</p>
               )}
-              <div ref={messagesEndRef} />
+              {isSpeaking && (
+                <p className="text-accent text-lg font-medium animate-pulse">Speaking...</p>
+              )}
             </div>
-          )}
-        </Card>
-
-        <form onSubmit={handleTextSubmit} className="flex items-center gap-2 mb-4">
-            <Input
-                type="text"
-                placeholder="Type your message..."
-                value={textInput}
-                onChange={(e) => setTextInput(e.target.value)}
-                disabled={isProcessing || isListening || isSpeaking}
-                className="flex-1 p-3 text-base"
-            />
-            <Button
-                type="submit"
-                size="icon"
-                disabled={textInput.trim() === '' || isProcessing || isListening || isSpeaking}
-            >
-                <Send className="h-5 w-5" />
-            </Button>
-        </form>
-
-        <div className="flex items-center justify-center gap-4">
-          <Button
-            size="lg"
-            onClick={handleVoiceInput}
-            disabled={isProcessing || isSpeaking || textInput.length > 0}
-            className={`h-20 w-20 rounded-full transition-all ${
-              isListening
-                ? 'bg-destructive hover:bg-destructive shadow-voice-glow animate-pulse'
-                : 'bg-gradient-accent hover:opacity-90'
-            }`}
-          >
-            {isListening ? (
-              <MicOff className="h-8 w-8" />
-            ) : (
-              <Mic className="h-8 w-8" />
-            )}
-          </Button>
-
-          <Button
-            size="lg"
-            variant="outline"
-            onClick={toggleSpeaker}
-            disabled={!isSpeaking}
-            className="h-16 w-16 rounded-full border-border"
-          >
-            {isSpeaking ? (
-              <Volume2 className="h-6 w-6 text-accent" />
-            ) : (
-              <VolumeX className="h-6 w-6" />
-            )}
-          </Button>
-        </div>
-
-        <div className="text-center mt-4 min-h-[24px]">
-          {isListening && (
-            <p className="text-accent font-medium animate-pulse">Listening...</p>
-          )}
-          {isProcessing && (
-            <p className="text-primary font-medium">Processing...</p>
-          )}
-          {isSpeaking && (
-            <p className="text-accent font-medium">Speaking...</p>
-          )}
+          </div>
         </div>
       </div>
     </Layout>

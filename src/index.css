@@ -54,6 +54,25 @@ All colors MUST be HSL.
     --voice-glow: 0 0 40px hsl(180 75% 50% / 0.6);
     --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   }
+
+  @keyframes gradient {
+    0%, 100% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+  }
+
+  @keyframes gradient-shift {
+    0%, 100% { transform: rotate(0deg) scale(1); }
+    50% { transform: rotate(180deg) scale(1.1); }
+  }
+
+  .animate-gradient {
+    background-size: 200% 200%;
+    animation: gradient 15s ease infinite;
+  }
+
+  .animate-gradient-shift {
+    animation: gradient-shift 20s ease infinite;
+  }
 }
 
 @layer base {

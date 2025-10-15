@@ -38,10 +38,9 @@ export class VoiceRecognition {
         popup: false,
       });
 
-      const listener = SpeechRecognition.addListener('partialResults', (data: any) => {
+      SpeechRecognition.addListener('partialResults', async (data: any) => {
         if (data.matches && data.matches.length > 0) {
           this.isListening = false;
-          listener.remove();
           onResult(data.matches[0]);
         }
       });
