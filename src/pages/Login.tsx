@@ -7,6 +7,7 @@ import { Card } from '@/components/ui/card';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { GraduationCap, Loader2 } from 'lucide-react';
+import RotatingText from '@/components/RotatingText';
 
 const Login: React.FC = () => {
   const [name, setName] = useState('');
@@ -56,32 +57,32 @@ const Login: React.FC = () => {
           <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gradient-primary mb-4">
             <GraduationCap className="h-8 w-8 text-primary-foreground" />
           </div>
-          <h1 className="text-3xl font-bold bg-gradient-primary bg-clip-text text-transparent mb-2">
-            Smart Campus
-          </h1>
+          <div className=''>
+            <h2 className="text-2xl font-bold mb-4">Next For CMRIT</h2>
+            <RotatingText
+              texts={['Smart Campus AI', 'Better Than ERP', 'Voice Based Queries',]}
+              mainClassName=" mb-4 bg-gradient-primary px-2 sm:px-2 md:px-3 text-2xl text-white font-sans font-semibold overflow-hidden py-0.5 sm:py-1 md:py-2 justify-center rounded-lg"
+              staggerFrom={"last"}
+              initial={{ y: "100%" }}
+              animate={{ y: 0 }}
+              exit={{ y: "-120%" }}
+              staggerDuration={0.025}
+              splitLevelClassName="overflow-hidden pb-0.5 sm:pb-1 md:pb-1"
+              transition={{ type: "spring", damping: 30, stiffness: 400 }}
+              rotationInterval={2000}
+            />
+          </div>
           <p className="text-muted-foreground">Sign in to continue</p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="name">Name</Label>
-            <Input
-              id="name"
-              type="text"
-              placeholder="Enter your name"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              required
-              className="bg-secondary border-input"
-            />
-          </div>
 
           <div className="space-y-2">
             <Label htmlFor="usn">USN</Label>
             <Input
               id="usn"
               type="text"
-              placeholder="e.g., 1MS21CS001"
+              placeholder="e.g. 1CR21CS001"
               value={usn}
               onChange={(e) => setUsn(e.target.value)}
               required
@@ -117,12 +118,6 @@ const Login: React.FC = () => {
             )}
           </Button>
         </form>
-
-        <div className="mt-6 text-center text-sm text-muted-foreground">
-          <p>Demo credentials:</p>
-          <p className="mt-1">Rhishav - 1MS21CS001 - rhishav123</p>
-          <p>Rajanya - 1MS21CS002 - rajanya123</p>
-        </div>
       </Card>
     </div>
   );
