@@ -1,4 +1,4 @@
-// src/pages/Home.tsx - NO CHANGES REQUIRED
+// src/pages/Home.tsx - Fixed Voice Input
 
 import React, { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
@@ -9,6 +9,10 @@ import { VoiceRecognition, TextToSpeech } from '@/utils/voice';
 import { sendToGemini, getSystemPrompt, Message } from '@/utils/gemini';
 import { useToast } from '@/hooks/use-toast';
 import Layout from '@/components/Layout';
+import SplitText from '@/components/SplitText';
+import RotatingText from '@/components/RotatingText';
+import DarkVeil from '@/components/DarkVeil';
+import Aurora from '@/components/Aurora';
 
 const Home: React.FC = () => {
   const { student } = useAuth();
@@ -22,6 +26,7 @@ const Home: React.FC = () => {
 
   const voiceRecognition = useRef(new VoiceRecognition());
   const tts = useRef(new TextToSpeech());
+  const isProcessingRef = useRef(false);
 
   useEffect(() => {
     const checkAvailability = async () => {
@@ -38,7 +43,13 @@ const Home: React.FC = () => {
   }, [toast]);
 
   const processInput = async (inputContent: string) => {
-    if (!inputContent.trim()) return;
+    if (!inputContent.trim() || isProcessingRef.current) {
+      console.log('Skipping process - empty or already processing');
+      return;
+    }
+
+    isProcessingRef.current = true;
+    console.log('Processing input:', inputContent);
 
     const userMessage: Message = { role: 'user', content: inputContent };
     setMessages(prev => [...prev, userMessage]);
@@ -54,7 +65,9 @@ const Home: React.FC = () => {
         student?.branch || ''
       );
 
+      console.log('Sending to Gemini...');
       const response = await sendToGemini([...messages, userMessage], systemPrompt);
+      console.log('Gemini response received');
 
       const assistantMessage: Message = { role: 'assistant', content: response };
       setMessages(prev => [...prev, assistantMessage]);
@@ -64,46 +77,73 @@ const Home: React.FC = () => {
       setIsSpeaking(true);
       
       await tts.current.speak(response, () => {
+        console.log('TTS finished');
         setIsSpeaking(false);
-        setCurrentSubtitle('');
       });
-    } catch (error) {
+    } catch (error: any) {
+      console.error('Error processing:', error);
       toast({
         title: 'Error',
-        description: 'Failed to process your request. Please check your API key.',
+        description: error.message || 'Failed to process your request.',
         variant: 'destructive',
       });
-      console.error('Error:', error);
       setCurrentSubtitle('');
-    } finally {
       setIsProcessing(false);
+      setIsSpeaking(false);
+    } finally {
+      isProcessingRef.current = false;
     }
   };
 
   const handleVoiceInput = async () => {
+    console.log('Mic button clicked, isListening:', isListening);
     setTextInput('');
 
     if (isListening) {
+      console.log('Stopping voice recognition...');
       await voiceRecognition.current.stop();
       setIsListening(false);
       setCurrentSubtitle('');
+      toast({
+        title: 'Cancelled',
+        description: 'Voice input cancelled',
+      });
       return;
     }
 
+    console.log('Starting voice recognition...');
     setIsListening(true);
     setCurrentSubtitle('Listening...');
 
     await voiceRecognition.current.start(
       async (transcript) => {
+        console.log('Got transcript:', transcript);
         setIsListening(false);
+        
+        if (!transcript || transcript.trim() === '') {
+          console.log('Empty transcript');
+          setCurrentSubtitle('');
+          toast({
+            title: 'No Speech',
+            description: 'No speech detected. Please try again.',
+            variant: 'destructive',
+          });
+          return;
+        }
+
         setCurrentSubtitle(transcript);
-        await processInput(transcript);
+        
+        // Brief delay to show what was heard
+        setTimeout(async () => {
+          await processInput(transcript);
+        }, 500);
       },
       (error) => {
+        console.error('Voice error:', error);
         setIsListening(false);
         toast({
-          title: 'Error',
-          description: `Voice recognition error: ${error}`,
+          title: 'Voice Error',
+          description: error || 'Could not recognize speech.',
           variant: 'destructive',
         });
         setCurrentSubtitle('');
@@ -128,38 +168,74 @@ const Home: React.FC = () => {
     }
   };
 
+  const getGreeting = () => {
+    const hour = new Date().getHours();
+    if (hour < 12) {
+      return 'Good Morning';
+    } else if (hour < 18) {
+      return 'Good Afternoon';
+    } else {
+      return 'Good Evening';
+    }
+  };
+
   return (
     <Layout>
-      <div className="h-screen w-screen fixed inset-0 overflow-hidden bg-gradient-to-br from-background via-primary/20 to-accent/20 animate-gradient">
-        <div className="absolute inset-0 bg-gradient-to-tr from-primary/30 via-transparent to-accent/30 animate-gradient-shift" />
-        
-        <div className="relative h-full flex flex-col items-center justify-center p-6">
-          <div className="absolute top-8 left-0 right-0 text-center">
-            <h2 className="text-2xl font-bold text-foreground mb-1">
-              {student?.name}
-            </h2>
-            <p className="text-muted-foreground text-sm">
-              Campus Assistant
-            </p>
-          </div>
+      <div className="h-screen w-screen">
+        <div className="w-screen h-lvh top-0" style={{ position: 'absolute', zIndex: '-99' }}>
+          {/* <DarkVeil /> */}
+          <Aurora
+            colorStops={["#264EE0", "#180F2E", "#2641AD"]}
+            blend={0.5}
+            amplitude={0.5}
+            speed={isSpeaking ? 2 : 1}
+          />
+        </div>
+        <div className="relative h-full flex flex-col items-center justify-center p-6 ">
 
-          <div className="flex-1 flex items-center justify-center w-full max-w-2xl px-4">
+          <div className="flex-1 flex items-center justify-center w-full max-w-2xl px-4 mt-20">
             {currentSubtitle ? (
               <div className="text-center space-y-4 animate-fade-in">
-                <p className="text-2xl md:text-4xl font-medium text-foreground leading-relaxed">
-                  {currentSubtitle}
-                </p>
+                <SplitText
+                  key={currentSubtitle}
+                  text={currentSubtitle}
+                  className="text-2xl font-sans font-semibold leading-relaxed text-center"
+                  delay={100}
+                  duration={0.6}
+                  ease="power3.out"
+                  splitType="words"
+                  from={{ opacity: 0, y: 40 }}
+                  to={{ opacity: 1, y: 0 }}
+                  threshold={0.1}
+                  rootMargin="-100px"
+                  textAlign="center"
+                />
               </div>
             ) : (
               <div className="text-center space-y-4">
+                <div>
+                  <p className='text-2xl font-sans font-semibold mb-4'>{getGreeting()}</p>
+                  <RotatingText
+                    texts={[student.name,student.usn]}
+                    mainClassName=" mb-4 bg-gradient-primary px-2 sm:px-2 md:px-3 text-2xl text-white font-sans font-semibold overflow-hidden py-0.5 sm:py-1 md:py-2 justify-center rounded-lg"
+                    staggerFrom={"last"}
+                    initial={{ y: "100%" }}
+                    animate={{ y: 0 }}
+                    exit={{ y: "-120%" }}
+                    staggerDuration={0.025}
+                    splitLevelClassName="overflow-hidden pb-0.5 sm:pb-1 md:pb-1"
+                    transition={{ type: "spring", damping: 30, stiffness: 400 }}
+                    rotationInterval={2500}
+                  />
+                </div>
                 <p className="text-lg text-muted-foreground">
-                  Tap the microphone to start
+                  {isListening ? 'Speak now... (tap to cancel)' : 'Tap the microphone to start'}
                 </p>
               </div>
             )}
           </div>
 
-          <div className="flex flex-col items-center gap-6 pb-12 w-full max-w-md px-4">
+          <div className="flex flex-col items-center gap-6 w-full max-w-md px-4 mb-20">
             <form onSubmit={handleTextSubmit} className="flex items-center gap-2 w-full">
               <Input
                 type="text"
@@ -184,7 +260,7 @@ const Home: React.FC = () => {
                 size="lg"
                 onClick={handleVoiceInput}
                 disabled={isProcessing || isSpeaking || textInput.length > 0}
-                className={`h-24 w-24 rounded-full transition-all ${
+                className={`h-12 w-28 rounded-full transition-all ${
                   isListening
                     ? 'bg-destructive hover:bg-destructive shadow-voice-glow animate-pulse'
                     : 'bg-gradient-accent hover:opacity-90'
@@ -202,7 +278,7 @@ const Home: React.FC = () => {
                 variant="outline"
                 onClick={toggleSpeaker}
                 disabled={!isSpeaking}
-                className="h-20 w-20 rounded-full border-2"
+                className="h-14 w-20 rounded-full border-2"
               >
                 {isSpeaking ? (
                   <Volume2 className="h-7 w-7 text-accent animate-pulse" />
@@ -212,7 +288,8 @@ const Home: React.FC = () => {
               </Button>
             </div>
 
-            <div className="text-center min-h-[28px]">
+            {/* Status indicator - uncomment if you want to see status */}
+            {/* <div className="text-center min-h-[28px]">
               {isListening && (
                 <p className="text-accent text-lg font-medium animate-pulse">Listening...</p>
               )}
@@ -222,7 +299,7 @@ const Home: React.FC = () => {
               {isSpeaking && (
                 <p className="text-accent text-lg font-medium animate-pulse">Speaking...</p>
               )}
-            </div>
+            </div> */}
           </div>
         </div>
       </div>
