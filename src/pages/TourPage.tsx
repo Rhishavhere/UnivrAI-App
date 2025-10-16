@@ -8,7 +8,7 @@ const TourPage: React.FC = () => {
   return (
     <Layout>
       <div className="p-4 space-y-6 pb-20">
-        <div className="text-center mb-6">
+        <div className="text-center mb-6 mt-28">
           <h2 className="text-2xl font-bold text-foreground mb-1">Campus Tour</h2>
           <p className="text-muted-foreground text-sm">
             Explore our beautiful campus

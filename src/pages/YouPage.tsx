@@ -21,7 +21,7 @@ const YouPage: React.FC = () => {
     <Layout>
       <div className="p-4 space-y-6 pb-20">
         {/* Profile Header */}
-        <div className="text-center mb-6">
+        <div className="text-center mb-6 mt-28">
           <div className="inline-flex items-center justify-center w-24 h-24 rounded-full bg-gradient-primary mb-4">
             <User className="h-12 w-12 text-primary-foreground" />
           </div>
