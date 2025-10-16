@@ -20,6 +20,9 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
     { path: '/you', icon: User, label: 'You' },
   ];
 
+
+  
+
   const handleLogout = () => {
     logout();
     onClose();
@@ -27,6 +30,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
 
   return (
     <>
+    
       {/* Backdrop */}
       {isOpen && (
         <div
@@ -46,7 +50,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
           <div className="p-6 border-b border-sidebar-border">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-xl font-bold bg-gradient-primary bg-clip-text text-transparent">
-                Smart Campus
+                CMRIT
               </h2>
               <Button
                 variant="ghost"
