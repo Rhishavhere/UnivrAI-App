@@ -135,22 +135,14 @@ const Chat: React.FC = () => {
 
   return (
     <Layout>
-      <div className="h-[calc(100vh-4rem)] flex flex-col p-4">
-        <div className="text-center mb-6">
-          <h2 className="text-2xl font-bold text-foreground mb-1">
-            Welcome, {student?.name}!
-          </h2>
-          <p className="text-muted-foreground text-sm">
-            Your AI-powered campus assistant
-          </p>
-        </div>
+      <div className="h-[calc(100vh-4rem)] flex flex-col p-4 ">
 
-        <Card className="flex-1 bg-card border-border p-4 mb-4 overflow-y-auto">
+        <Card className="flex-1 bg-card border-border p-4 mb-4 overflow-y-auto mt-24">
           {messages.length === 0 && !currentTranscript ? (
             <div className="h-full flex items-center justify-center text-center">
               <div className="space-y-2">
                 <p className="text-muted-foreground">
-                  Type or tap the microphone to start a conversation 💬
+                  Type to start a conversation 💬
                 </p>
                 <p className="text-sm text-muted-foreground">
                   Ask me about classes, events, facilities, or campus tours!
@@ -217,23 +209,6 @@ const Chat: React.FC = () => {
         <div className="flex items-center justify-center gap-4">
           <Button
             size="lg"
-            onClick={handleVoiceInput}
-            disabled={isProcessing || isSpeaking || textInput.length > 0}
-            className={`h-20 w-20 rounded-full transition-all ${
-              isListening
-                ? 'bg-destructive hover:bg-destructive shadow-voice-glow animate-pulse'
-                : 'bg-gradient-accent hover:opacity-90'
-            }`}
-          >
-            {isListening ? (
-              <MicOff className="h-8 w-8" />
-            ) : (
-              <Mic className="h-8 w-8" />
-            )}
-          </Button>
-
-          <Button
-            size="lg"
             variant="outline"
             onClick={toggleSpeaker}
             disabled={!isSpeaking}
@@ -247,17 +222,6 @@ const Chat: React.FC = () => {
           </Button>
         </div>
 
-        <div className="text-center mt-4 min-h-[24px]">
-          {isListening && (
-            <p className="text-accent font-medium animate-pulse">Listening...</p>
-          )}
-          {isProcessing && (
-            <p className="text-primary font-medium">Processing...</p>
-          )}
-          {isSpeaking && (
-            <p className="text-accent font-medium">Speaking...</p>
-          )}
-        </div>
       </div>
     </Layout>
   );
