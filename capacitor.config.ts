@@ -9,6 +9,11 @@ const config: CapacitorConfig = {
   },
   android: {
     allowMixedContent: true
+  },
+  plugins: {
+    SpeechRecognition: {
+      language: "en-US",
+    }
   }
 };
 
