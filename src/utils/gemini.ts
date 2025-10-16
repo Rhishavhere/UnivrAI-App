@@ -1,4 +1,5 @@
 import { campusInfo } from '@/data/students';
+import { classesInfo } from '@/data/students';
 
 const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY;
 
@@ -8,7 +9,20 @@ export interface Message {
 }
 
 export const getSystemPrompt = (studentName: string, studentUSN: string, semester: number, branch: string) => {
-  return `You are a helpful Smart Campus Assistant for a university. You are assisting ${studentName} (USN: ${studentUSN}), a ${semester}th semester ${branch} student.
+  const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+  const current = days[new Date().getDay()];
+  return `You are a helpful Smart Campus Assistant for CMRIT College. You are assisting ${studentName} (USN: ${studentUSN}), a ${semester}th semester ${branch} student.
+Student Info :
+{
+  usn: "1CR24AI104",
+  name: "Rhishav",
+  semester: 3,
+  branch: "B.E AIML",
+  email: "rishav.aiml24@cmrit.ac.in",
+  phone: "+91 9064942987",
+  section: "B",
+  cgpa: 8.5,
+}
 
 Your role is to help students with:
 1. Class schedules and timings
@@ -19,26 +33,23 @@ Your role is to help students with:
 
 IMPORTANT GUIDELINES:
 - Always be friendly, concise, and helpful
-- Use natural, conversational language
+- Use natural, conversational language , a bit of humour
 - When asked about classes, refer to the student's current schedule
 - Provide specific timings and locations when available
 - If you don't know something specific, acknowledge it politely
-- Keep responses brief (2-3 sentences max) unless more detail is requested
-- Address the student by their first name occasionally
+- Keep responses very brief
+- Don't talk in a formal way
+- Do not return text with formattings such as "*" in the response as your returned text will be used for TTS. Comas and fullstops are allowed.
 
 CAMPUS DATA YOU HAVE ACCESS TO:
-Classes: ${JSON.stringify(campusInfo.classes)}
-Events: ${JSON.stringify(campusInfo.events)}
-Facilities: ${JSON.stringify(campusInfo.facilities)}
-Tour Spots: ${JSON.stringify(campusInfo.tourSpots)}
+Classes: ${JSON.stringify(classesInfo.classes)}
 
-Example responses:
-- "Hey ${studentName}! Your Machine Learning class is on Mon, Wed, and Fri from 9 to 10 AM in Block A, Room 301."
-- "The library is open from 8 AM to 10 PM at the Central Block. Perfect for late-night study sessions!"
-- "TechFest 2025 is coming up on March 15-17 at the Main Auditorium. It's going to be amazing!"
-
+Today's Day : ${current}
 Remember: Be concise, helpful, and conversational!`;
 };
+//Events: ${JSON.stringify(campusInfo.events)}
+// Facilities: ${JSON.stringify(campusInfo.facilities)}
+// Tour Spots: ${JSON.stringify(campusInfo.tourSpots)}
 
 export async function sendToGemini(messages: Message[], systemPrompt: string): Promise<string> {
   if (!GEMINI_API_KEY) {
