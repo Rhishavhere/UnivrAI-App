@@ -1,11 +1,12 @@
-// src/pages/Home.tsx - Fixed Voice Input
+// src/pages/Home.tsx - Web Speech API Integration
 
 import React, { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Mic, MicOff, Volume2, VolumeX, Send } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
-import { VoiceRecognition, TextToSpeech } from '@/utils/voice';
+import { TextToSpeech } from '@/utils/voice';
+import useSpeechRecognition from '@/hooks/speechRecognition';
 import { sendToGemini, getSystemPrompt, Message } from '@/utils/gemini';
 import { useToast } from '@/hooks/use-toast';
 import Layout from '@/components/Layout';
@@ -17,30 +18,34 @@ import Aurora from '@/components/Aurora';
 const Home: React.FC = () => {
   const { student } = useAuth();
   const { toast } = useToast();
-  const [isListening, setIsListening] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
   const [currentSubtitle, setCurrentSubtitle] = useState('');
   const [textInput, setTextInput] = useState('');
 
-  const voiceRecognition = useRef(new VoiceRecognition());
+  const { text, startListening, stopListening, isListening, hasRecognitionSupport } = useSpeechRecognition();
   const tts = useRef(new TextToSpeech());
   const isProcessingRef = useRef(false);
 
+  // Process speech recognition text when it's captured
   useEffect(() => {
-    const checkAvailability = async () => {
-      const isVrAvailable = await voiceRecognition.current.isAvailable();
-      if (!isVrAvailable) {
-        toast({
-          title: 'Voice Recognition Unavailable',
-          description: 'Speech recognition is not supported on this device.',
-          variant: 'destructive',
-        });
-      }
-    };
-    checkAvailability();
-  }, [toast]);
+    if (text && text.trim() && !isProcessingRef.current) {
+      console.log('Speech text received:', text);
+      processInput(text);
+    }
+  }, [text]);
+
+  // Check for speech recognition support
+  useEffect(() => {
+    if (!hasRecognitionSupport) {
+      toast({
+        title: 'Voice Recognition Unavailable',
+        description: 'Speech recognition is not supported in this browser. Try Chrome, Edge, or Safari.',
+        variant: 'destructive',
+      });
+    }
+  }, [hasRecognitionSupport, toast]);
 
   const processInput = async (inputContent: string) => {
     if (!inputContent.trim() || isProcessingRef.current) {
@@ -95,62 +100,14 @@ const Home: React.FC = () => {
     }
   };
 
-  const handleVoiceInput = async () => {
-    console.log('Mic button clicked, isListening:', isListening);
-    setTextInput('');
-
+  const handleVoiceInput = () => {
     if (isListening) {
-      console.log('Stopping voice recognition...');
-      await voiceRecognition.current.stop();
-      setIsListening(false);
-      setCurrentSubtitle('');
-      toast({
-        title: 'Cancelled',
-        description: 'Voice input cancelled',
-      });
-      return;
+      stopListening();
+    } else {
+      startListening();
     }
-
-    console.log('Starting voice recognition...');
-    setIsListening(true);
-    setCurrentSubtitle('Listening...');
-
-    await voiceRecognition.current.start(
-      async (transcript) => {
-        console.log('Got transcript:', transcript);
-        setIsListening(false);
-        
-        if (!transcript || transcript.trim() === '') {
-          console.log('Empty transcript');
-          setCurrentSubtitle('');
-          toast({
-            title: 'No Speech',
-            description: 'No speech detected. Please try again.',
-            variant: 'destructive',
-          });
-          return;
-        }
-
-        setCurrentSubtitle(transcript);
-        
-        // Brief delay to show what was heard
-        setTimeout(async () => {
-          await processInput(transcript);
-        }, 500);
-      },
-      (error) => {
-        console.error('Voice error:', error);
-        setIsListening(false);
-        toast({
-          title: 'Voice Error',
-          description: error || 'Could not recognize speech.',
-          variant: 'destructive',
-        });
-        setCurrentSubtitle('');
-      }
-    );
   };
-
+  
   const handleTextSubmit = async (e?: React.FormEvent) => {
     e?.preventDefault();
     if (textInput.trim() === '' || isProcessing || isListening || isSpeaking) return;
@@ -183,7 +140,6 @@ const Home: React.FC = () => {
     <Layout>
       <div className="h-screen w-screen">
         <div className="w-screen h-lvh top-0" style={{ position: 'absolute', zIndex: '-99' }}>
-          {/* <DarkVeil /> */}
           <Aurora
             colorStops={["#264EE0", "#180F2E", "#2641AD"]}
             blend={0.5}
@@ -216,7 +172,7 @@ const Home: React.FC = () => {
                 <div>
                   <p className='text-2xl font-sans font-semibold mb-4'>{getGreeting()}</p>
                   <RotatingText
-                    texts={[student.name,student.usn]}
+                    texts={[student.name, student.usn]}
                     mainClassName=" mb-4 bg-gradient-primary px-2 sm:px-2 md:px-3 text-2xl text-white font-sans font-semibold overflow-hidden py-0.5 sm:py-1 md:py-2 justify-center rounded-lg"
                     staggerFrom={"last"}
                     initial={{ y: "100%" }}
@@ -229,7 +185,7 @@ const Home: React.FC = () => {
                   />
                 </div>
                 <p className="text-lg text-muted-foreground">
-                  {isListening ? 'Speak now... (tap to cancel)' : 'Tap the microphone to start'}
+                  {isListening ? 'Listening... (tap mic to stop)' : 'Tap the microphone to start'}
                 </p>
               </div>
             )}
@@ -259,7 +215,7 @@ const Home: React.FC = () => {
               <Button
                 size="lg"
                 onClick={handleVoiceInput}
-                disabled={isProcessing || isSpeaking || textInput.length > 0}
+                disabled={isProcessing || isSpeaking}
                 className={`h-12 w-28 rounded-full transition-all ${
                   isListening
                     ? 'bg-destructive hover:bg-destructive shadow-voice-glow animate-pulse'
@@ -287,19 +243,6 @@ const Home: React.FC = () => {
                 )}
               </Button>
             </div>
-
-            {/* Status indicator - uncomment if you want to see status */}
-            {/* <div className="text-center min-h-[28px]">
-              {isListening && (
-                <p className="text-accent text-lg font-medium animate-pulse">Listening...</p>
-              )}
-              {isProcessing && (
-                <p className="text-primary text-lg font-medium">Processing...</p>
-              )}
-              {isSpeaking && (
-                <p className="text-accent text-lg font-medium animate-pulse">Speaking...</p>
-              )}
-            </div> */}
           </div>
         </div>
       </div>

@@ -1,125 +1,6 @@
-// src/utils/voice.ts - Robust Android Fix
+// src/utils/voice.ts - Web Speech API Implementation
 
-import { Capacitor } from '@capacitor/core';
-import { SpeechRecognition } from '@capacitor-community/speech-recognition';
 import { EdgeTTS } from 'edge-tts-universal/browser';
-
-export class VoiceRecognition {
-  private isRecording: boolean = false;
-  private currentTranscript: string = '';
-
-  /**
-   * Check if voice recognition is available
-   */
-  async isAvailable(): Promise<boolean> {
-    try {
-      const { available } = await SpeechRecognition.available();
-      return available;
-    } catch (error) {
-      console.error('Speech recognition check failed:', error);
-      return false;
-    }
-  }
-
-  /**
-   * Request microphone permissions
-   */
-  async requestPermissions(): Promise<boolean> {
-    try {
-      const { speechRecognition } = await SpeechRecognition.requestPermissions();
-      return speechRecognition === 'granted';
-    } catch (error) {
-      console.error('Permission request failed:', error);
-      return false;
-    }
-  }
-
-  /**
-   * Start voice recognition
-   * User must manually stop by calling stop()
-   */
-  async start(
-    onResult: (transcript: string) => void,
-    onError: (error: string) => void
-  ): Promise<void> {
-    if (this.isRecording) {
-      console.warn('Already recording');
-      return;
-    }
-
-    // Request permissions first
-    const hasPermission = await this.requestPermissions();
-    if (!hasPermission) {
-      onError('Microphone permission denied');
-      return;
-    }
-
-    this.isRecording = true;
-    this.currentTranscript = '';
-
-    try {
-      // Listen for speech results
-      await SpeechRecognition.addListener('partialResults', (data: { matches: string[] }) => {
-        if (data.matches && data.matches.length > 0) {
-          this.currentTranscript = data.matches[0];
-          console.log('Current transcript:', this.currentTranscript);
-        }
-      });
-
-      // Start recognition
-      await SpeechRecognition.start({
-        language: 'en-US',
-        maxResults: 1,
-        prompt: 'Listening...',
-        partialResults: true,
-        popup: false,
-      });
-
-      console.log('Voice recognition started');
-    } catch (error: any) {
-      console.error('Failed to start recognition:', error);
-      this.isRecording = false;
-      SpeechRecognition.removeAllListeners();
-      onError(error?.message || 'Failed to start speech recognition');
-    }
-  }
-
-  /**
-   * Stop voice recognition and return final transcript
-   */
-  async stop(): Promise<void> {
-    if (!this.isRecording) {
-      console.warn('Not currently recording');
-      return;
-    }
-
-    try {
-      await SpeechRecognition.stop();
-      this.isRecording = false;
-      SpeechRecognition.removeAllListeners();
-      console.log('Voice recognition stopped');
-    } catch (error) {
-      console.error('Error stopping recognition:', error);
-      this.isRecording = false;
-      SpeechRecognition.removeAllListeners();
-    }
-  }
-
-  /**
-   * Get current transcript
-   */
-  getTranscript(): string {
-    return this.currentTranscript;
-  }
-
-  /**
-   * Check if currently recording
-   */
-  isListening(): boolean {
-    return this.isRecording;
-  }
-}
-
 export class TextToSpeech {
   private isSpeaking = false;
   private audioPlayer: HTMLAudioElement | null = null;
@@ -136,14 +17,30 @@ export class TextToSpeech {
     this.isSpeaking = true;
     try {
       console.log('Starting TTS for:', text.substring(0, 50) + '...');
-      const tts = new EdgeTTS(text, 'en-US-AvaNeural');
-      const result = await tts.synthesize();
       
+      // Initialize Edge TTS
+      const tts = new EdgeTTS(text, 'en-US-AvaNeural');
+      console.log('EdgeTTS initialized, synthesizing...');
+      
+      const result = await tts.synthesize();
+      console.log('Synthesis complete, result:', result);
+      
+      // Get audio data
       const audioData = await result.audio.arrayBuffer();
+      console.log('Audio data received, size:', audioData.byteLength);
+      
       const audioBlob = new Blob([audioData], { type: 'audio/mpeg' });
       const audioUrl = URL.createObjectURL(audioBlob);
+      console.log('Audio URL created:', audioUrl);
 
       this.audioPlayer = new Audio(audioUrl);
+      
+      // Set volume to maximum
+      this.audioPlayer.volume = 1.0;
+      
+      this.audioPlayer.onloadedmetadata = () => {
+        console.log('Audio loaded, duration:', this.audioPlayer?.duration);
+      };
       
       this.audioPlayer.onended = () => {
         console.log('TTS playback ended');
@@ -155,6 +52,7 @@ export class TextToSpeech {
       
       this.audioPlayer.onerror = (error) => {
         console.error('Audio playback error:', error);
+        console.error('Audio player error details:', this.audioPlayer?.error);
         this.isSpeaking = false;
         if (audioUrl) {
           URL.revokeObjectURL(audioUrl);
@@ -163,8 +61,24 @@ export class TextToSpeech {
         onEnd?.();
       };
       
-      await this.audioPlayer.play();
-      console.log('TTS playback started');
+      this.audioPlayer.onplay = () => {
+        console.log('Audio started playing');
+      };
+      
+      console.log('Attempting to play audio...');
+      const playPromise = this.audioPlayer.play();
+      
+      playPromise
+        .then(() => {
+          console.log('TTS playback started successfully');
+        })
+        .catch((error) => {
+          console.error('Play failed:', error);
+          this.isSpeaking = false;
+          URL.revokeObjectURL(audioUrl);
+          this.audioPlayer = null;
+          onEnd?.();
+        });
 
     } catch (error) {
       console.error("Edge TTS Error:", error);

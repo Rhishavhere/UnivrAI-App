@@ -6,7 +6,7 @@ import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Mic, MicOff, Volume2, VolumeX, Loader2, Send } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
-import { VoiceRecognition, TextToSpeech } from '@/utils/voice';
+import { TextToSpeech } from '@/utils/voice';
 import { sendToGemini, getSystemPrompt, Message } from '@/utils/gemini';
 import { useToast } from '@/hooks/use-toast';
 import Layout from '@/components/Layout';
@@ -21,7 +21,6 @@ const Chat: React.FC = () => {
   const [currentTranscript, setCurrentTranscript] = useState('');
   const [textInput, setTextInput] = useState('');
 
-  const voiceRecognition = useRef(new VoiceRecognition());
   const tts = useRef(new TextToSpeech());
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -33,19 +32,6 @@ const Chat: React.FC = () => {
     scrollToBottom();
   }, [messages, currentTranscript]);
 
-  useEffect(() => {
-    const checkAvailability = async () => {
-      const isVrAvailable = await voiceRecognition.current.isAvailable();
-      if (!isVrAvailable) {
-        toast({
-          title: 'Voice Recognition Unavailable',
-          description: 'Speech recognition is not supported on this device.',
-          variant: 'destructive',
-        });
-      }
-    };
-    checkAvailability();
-  }, [toast]);
 
   const processInput = async (inputContent: string) => {
     if (!inputContent.trim()) return;
@@ -86,36 +72,36 @@ const Chat: React.FC = () => {
     }
   };
 
-  const handleVoiceInput = async () => {
-    setTextInput('');
+  // const handleVoiceInput = async () => {
+  //   setTextInput('');
 
-    if (isListening) {
-      await voiceRecognition.current.stop();
-      setIsListening(false);
-      return;
-    }
+  //   if (isListening) {
+  //     await voiceRecognition.current.stop();
+  //     setIsListening(false);
+  //     return;
+  //   }
 
-    setIsListening(true);
-    setCurrentTranscript('');
+  //   setIsListening(true);
+  //   setCurrentTranscript('');
 
-    await voiceRecognition.current.start(
-      async (transcript) => {
-        setIsListening(false);
-        setCurrentTranscript(transcript);
-        await processInput(transcript);
-        setCurrentTranscript('');
-      },
-      (error) => {
-        setIsListening(false);
-        toast({
-          title: 'Error',
-          description: `Voice recognition error: ${error}`,
-          variant: 'destructive',
-        });
-        setCurrentTranscript('');
-      }
-    );
-  };
+  //   await voiceRecognition.current.start(
+  //     async (transcript) => {
+  //       setIsListening(false);
+  //       setCurrentTranscript(transcript);
+  //       await processInput(transcript);
+  //       setCurrentTranscript('');
+  //     },
+  //     (error) => {
+  //       setIsListening(false);
+  //       toast({
+  //         title: 'Error',
+  //         description: `Voice recognition error: ${error}`,
+  //         variant: 'destructive',
+  //       });
+  //       setCurrentTranscript('');
+  //     }
+  //   );
+  // };
 
   const handleTextSubmit = async (e?: React.FormEvent) => {
     e?.preventDefault();
