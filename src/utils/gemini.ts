@@ -45,8 +45,11 @@ CAMPUS DATA YOU HAVE ACCESS TO:
 Classes: ${JSON.stringify(classesInfo.classes)}
 
 Today's Day : ${current}
-Remember: Be concise, helpful, and conversational!`;
+Attendence in OS : 71%
+Remember: Be concise, helpful, and conversational! `;
 };
+
+
 //Events: ${JSON.stringify(campusInfo.events)}
 // Facilities: ${JSON.stringify(campusInfo.facilities)}
 // Tour Spots: ${JSON.stringify(campusInfo.tourSpots)}

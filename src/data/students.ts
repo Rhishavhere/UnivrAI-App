@@ -61,11 +61,46 @@ export const classesInfo = {
         "subjects": [
           {
             "code": "CS602",
-            "name": "Cloud Computing",
-            "instructor": "Prof. Michael Chen",
-            "time": "11:00 AM to 12:30 PM",
-            "room": "Block B, Room 205"
-          }
+            "name": "Operating System",
+            "instructor": "Jhoshuva Sir",
+            "time": "8:00 AM to 9:00 AM",
+            "room": "D Block, Room LH102"
+          },
+          {
+            "code": "CS602",
+            "name": "Maths",
+            "instructor": "Dr. Balaji C",
+            "time": "9:00 AM to 10:00 AM",
+            "room": "D Block, Room LH102"
+          },
+          {
+            "code": "CS602",
+            "name": "Data Structures Lab",
+            "instructor": "Jhoshuva Sir",
+            "time": "10:20 AM to 12:20 PM",
+            "room": "D Block, Math Lab"
+          },
+          {
+            "code": "CS602",
+            "name": "Operating System",
+            "instructor": "Jhoshuva Sir",
+            "time": "1:00 PM to 2:00 PM",
+            "room": "D Block, Room LH102"
+          },
+          {
+            "code": "CS602",
+            "name": "DDCO",
+            "instructor": "Saurav Kumar",
+            "time": "2:00 PM to 3:00 PM",
+            "room": "D Block, Room LH102"
+          },
+          {
+            "code": "CS602",
+            "name": "Java",
+            "instructor": "Ms Jeevathi R",
+            "time": "3:00 PM to 4:00 PM",
+            "room": "D Block, Room LH102"
+          },
         ]
       },
       "Wed": {
