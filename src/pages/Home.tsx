@@ -16,6 +16,7 @@ import RotatingText from '@/components/RotatingText';
 import DarkVeil from '@/components/DarkVeil';
 import Aurora from '@/components/Aurora';
 
+
 const Home: React.FC = () => {
   const { student } = useAuth();
   const { toast } = useToast();
@@ -62,9 +63,6 @@ const Home: React.FC = () => {
 
     // Check for emergency keywords
 
-
-    
-
     setIsProcessing(true);
     setCurrentSubtitle('Processing...');
 
@@ -89,7 +87,7 @@ const Home: React.FC = () => {
           setIsSpeaking(false);
         });
       try {
-        await fetch('http://localhost:5000/sos', {
+        await fetch('http://192.168.0.5:5000/sos', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',

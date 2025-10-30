@@ -15,7 +15,7 @@ def play_alarm_sound():
         if sys.platform == 'win32':
             import winsound
             # Play beep sound at 1000Hz for 1 second, repeat 5 times
-            for _ in range(5):
+            for _ in range(15):
                 winsound.Beep(1000, 500)
         # For Linux
         elif sys.platform == 'linux':
