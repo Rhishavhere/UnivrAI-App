@@ -8,6 +8,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { TextToSpeech } from '@/utils/voice';
 import useSpeechRecognition from '@/hooks/speechRecognition';
 import { sendToGemini, getSystemPrompt, Message } from '@/utils/gemini';
+import { sendAlert, getAlertPrompt} from '@/utils/alert';
 import { useToast } from '@/hooks/use-toast';
 import Layout from '@/components/Layout';
 import SplitText from '@/components/SplitText';
@@ -59,10 +60,61 @@ const Home: React.FC = () => {
     const userMessage: Message = { role: 'user', content: inputContent };
     setMessages(prev => [...prev, userMessage]);
 
+    // Check for emergency keywords
+
+
+    
+
     setIsProcessing(true);
     setCurrentSubtitle('Processing...');
-    
-    try {
+
+    const lowerContent = inputContent.toLowerCase();
+
+    if (lowerContent.includes('emergency') || lowerContent.includes('alert')) {
+
+      const alertPrompt = getAlertPrompt(
+        student?.name || '',
+        student?.usn || '',
+        student?.semester || 0,
+        student?.branch || ''
+      );
+
+      const response = await sendAlert(lowerContent, alertPrompt);
+      setIsProcessing(false);
+      setCurrentSubtitle("I just alerted the authorities. They will be here soon!");
+      setIsSpeaking(true);
+        
+        await tts.current.speak("I just alerted the authorities. They will be here soon!", () => {
+          console.log('TTS finished');
+          setIsSpeaking(false);
+        });
+      try {
+        await fetch('http://localhost:5000/sos', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            message: response,
+            timestamp: new Date().toISOString(),
+          }),
+        });
+        toast({
+          title: 'Emergency Alert Sent',
+          description: 'Your emergency message has been forwarded to campus security.',
+          variant: 'default',
+        });
+      } catch (error) {
+        console.error('Failed to send emergency alert:', error);
+        toast({
+          title: 'Alert Failed',
+          description: 'Could not send emergency alert. Please try again.',
+          variant: 'destructive',
+        });
+      }
+    }
+    else{
+
       const systemPrompt = getSystemPrompt(
         student?.name || '',
         student?.usn || '',
@@ -70,35 +122,41 @@ const Home: React.FC = () => {
         student?.branch || ''
       );
 
-      console.log('Sending to Gemini...');
-      const response = await sendToGemini([...messages, userMessage], systemPrompt);
-      console.log('Gemini response received');
-      // const response = "Oh Rhishav, your attendance is toast. Even if you go today, internals are off-limits trust me. Bother not"
-      const assistantMessage: Message = { role: 'assistant', content: response };
-      setMessages(prev => [...prev, assistantMessage]);
-
-      setIsProcessing(false);
-      setCurrentSubtitle(response);
-      setIsSpeaking(true);
-      
-      await tts.current.speak(response, () => {
-        console.log('TTS finished');
+      try {
+  
+        console.log('Sending to Gemini...');
+        const response = await sendToGemini([...messages, userMessage], systemPrompt);
+        console.log('Gemini response received');
+        // const response = "Oh Rhishav, your attendance is toast. Even if you go today, internals are off-limits trust me. Bother not"
+        const assistantMessage: Message = { role: 'assistant', content: response };
+        setMessages(prev => [...prev, assistantMessage]);
+  
+        setIsProcessing(false);
+        setCurrentSubtitle(response);
+        setIsSpeaking(true);
+        
+        await tts.current.speak(response, () => {
+          console.log('TTS finished');
+          setIsSpeaking(false);
+        });
+      } catch (error: any) {
+        console.error('Error processing:', error);
+        toast({
+          title: 'Error',
+          description: error.message || 'Failed to process your request.',
+          variant: 'destructive',
+        });
+        setCurrentSubtitle('');
+        setIsProcessing(false);
         setIsSpeaking(false);
-      });
-    } catch (error: any) {
-      console.error('Error processing:', error);
-      toast({
-        title: 'Error',
-        description: error.message || 'Failed to process your request.',
-        variant: 'destructive',
-      });
-      setCurrentSubtitle('');
-      setIsProcessing(false);
-      setIsSpeaking(false);
-    } finally {
-      isProcessingRef.current = false;
-    }
-  };
+      } finally {
+        isProcessingRef.current = false;
+      }
+    };
+  }
+
+ 
+    
 
   const handleVoiceInput = () => {
     if (isListening) {
