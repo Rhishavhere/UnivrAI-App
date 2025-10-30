@@ -207,7 +207,7 @@ const Home: React.FC = () => {
 
           <div className="flex-1 flex items-center justify-center w-full max-w-2xl px-4 mt-20">
             {currentSubtitle ? (
-              <div className="text-center space-y-4 animate-fade-in">
+              <div className="text-justify space-y-4 animate-fade-in h-72 overflow-y-scroll">
                 <SplitText
                   key={currentSubtitle}
                   text={currentSubtitle}
