@@ -37,7 +37,7 @@ const YouPage: React.FC = () => {
           </h3>
           <div className="space-y-3">
             <div className="flex justify-between items-center">
-              <span className="text-muted-foreground">Branch</span>
+              <span className="text-muted-foreground">Department</span>
               <span className="font-medium text-foreground">{student.branch}</span>
             </div>
             <div className="flex justify-between items-center">

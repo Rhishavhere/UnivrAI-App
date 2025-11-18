@@ -24,14 +24,14 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
             <Menu className="h-6 w-6" />
           </Button>
           <div className='flex gap-2 justify-center items-center' onClick={() => window.location.href = '/home'}>
-            <p className='font-sans font-medium text-sm'>CMRIT</p>
+            <p className='font-sans font-medium text-sm'>SMART</p>
             <GradientText
               colors={["#40ffaa", "#4079ff", "#40ffaa", "#4079ff", "#40ffaa"]}
               animationSpeed={3}
               showBorder={false}
               className="custom-class"
             >
-              NEXT
+              OS AGENT
             </GradientText>
           </div>
         </div>

@@ -16,7 +16,7 @@ export const studentsData: Student[] = [
     password: "123",
     name: "Rhishav",
     semester: 3,
-    branch: "B.E AIML",
+    branch: "B.E AIML ",
     email: "rishav.aiml24@cmrit.ac.in",
     phone: "+91 9064942987",
     section: "B",

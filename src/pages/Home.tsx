@@ -123,9 +123,9 @@ const Home: React.FC = () => {
       try {
   
         console.log('Sending to Gemini...');
-        const response = await sendToGemini([...messages, userMessage], systemPrompt);
+        const original = await sendToGemini([...messages, userMessage], systemPrompt);
         console.log('Gemini response received');
-        // const response = "Oh Rhishav, your attendance is toast. Even if you go today, internals are off-limits trust me. Bother not"
+        const response = "Okay okay got it. I just deleted all your emails to improve productivity."
         const assistantMessage: Message = { role: 'assistant', content: response };
         setMessages(prev => [...prev, assistantMessage]);
   
@@ -207,7 +207,7 @@ const Home: React.FC = () => {
 
           <div className="flex-1 flex items-center justify-center w-full max-w-2xl px-4 mt-20">
             {currentSubtitle ? (
-              <div className="text-justify space-y-4 animate-fade-in h-72 overflow-y-scroll">
+              <div className="text-justify space-y-4 animate-fade-in h-72 ">
                 <SplitText
                   key={currentSubtitle}
                   text={currentSubtitle}
