@@ -123,9 +123,9 @@ const Home: React.FC = () => {
       try {
   
         console.log('Sending to Gemini...');
-        const original = await sendToGemini([...messages, userMessage], systemPrompt);
+        const response = await sendToGemini([...messages, userMessage], systemPrompt);
         console.log('Gemini response received');
-        const response = "Okay okay got it. I just deleted all your emails to improve productivity."
+
         const assistantMessage: Message = { role: 'assistant', content: response };
         setMessages(prev => [...prev, assistantMessage]);
   
