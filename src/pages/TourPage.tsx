@@ -36,19 +36,19 @@ const TourPage: React.FC = () => {
             {campusInfo.tourSpots.map((spot, index) => (
               <Card
                 key={index}
-                className="p-4 bg-card border-border hover:border-primary transition-colors cursor-pointer"
+                className="p-4 hover:bg-white/5 transition-all duration-300 cursor-pointer group"
               >
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
-                    <h4 className="font-semibold text-foreground mb-2 flex items-center gap-2">
-                      <span className="flex items-center justify-center w-6 h-6 rounded-full bg-primary/20 text-primary text-xs font-bold">
+                    <h4 className="font-semibold text-foreground mb-2 flex items-center gap-2 group-hover:text-primary transition-colors">
+                      <span className="flex items-center justify-center w-6 h-6 rounded-full bg-primary/20 text-primary text-xs font-bold group-hover:bg-primary group-hover:text-white transition-colors">
                         {index + 1}
                       </span>
                       {spot.name}
                     </h4>
                     <p className="text-sm text-muted-foreground">{spot.description}</p>
                   </div>
-                  <ChevronRight className="h-5 w-5 text-muted-foreground flex-shrink-0 ml-2" />
+                  <ChevronRight className="h-5 w-5 text-muted-foreground flex-shrink-0 ml-2 group-hover:translate-x-1 transition-transform" />
                 </div>
               </Card>
             ))}
@@ -56,9 +56,11 @@ const TourPage: React.FC = () => {
         </section>
 
         {/* Tour Tips */}
-        <Card className="p-4 bg-secondary border-border">
-          <h4 className="font-semibold text-foreground mb-2">Tour Tips</h4>
-          <ul className="space-y-2 text-sm text-muted-foreground">
+        <Card className="p-6 bg-gradient-to-br from-secondary/50 to-background border-l-4 border-l-accent">
+          <h4 className="font-semibold text-foreground mb-4 flex items-center gap-2">
+             <span className="text-2xl">💡</span> Tour Tips
+          </h4>
+          <ul className="space-y-3 text-sm text-muted-foreground">
             <li className="flex items-start gap-2">
               <span className="text-accent mt-0.5">•</span>
               <span>Start your tour at the Main Entrance Gate</span>

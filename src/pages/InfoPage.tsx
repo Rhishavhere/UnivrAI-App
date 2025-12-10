@@ -30,7 +30,7 @@ const InfoPage: React.FC = () => {
             <TabsList className="grid w-full grid-cols-6 sm:grid-cols-6">
               {/* Create a tab trigger for each day */}
               {Object.keys(classesInfo.classes).map((day) => (
-                <TabsTrigger key={day} value={day}>
+                <TabsTrigger key={day} value={day} className="data-[state=active]:bg-primary data-[state=active]:text-white">
                   {day}
                 </TabsTrigger>
               ))}
@@ -42,7 +42,7 @@ const InfoPage: React.FC = () => {
                 <div className="space-y-3 pt-4">
                   {dayInfo.subjects.length > 0 ? (
                     dayInfo.subjects.map((subject, index) => (
-                      <Card key={`${dayInfo.day}-${index}`} className="p-4 bg-card border-border">
+                      <Card key={`${dayInfo.day}-${index}`} className="p-4 hover:bg-white/5 transition-colors">
                         <div className="space-y-2">
                           <div className="flex items-start justify-between">
                             <div>
@@ -53,19 +53,21 @@ const InfoPage: React.FC = () => {
                           <p className="text-sm text-foreground">{subject.instructor}</p>
                           <div className="flex items-center gap-4 text-sm text-muted-foreground">
                             <span className="flex items-center gap-1">
-                              <Clock className="h-4 w-4" />
+                              <Clock className="h-4 w-4 text-primary" />
                               {subject.time}
                             </span>
                           </div>
                           <p className="text-sm text-muted-foreground flex items-center gap-1">
-                            <MapPin className="h-4 w-4" />
+                            <MapPin className="h-4 w-4 text-secondary" />
                             {subject.room}
                           </p>
                         </div>
                       </Card>
                     ))
                   ) : (
-                    <p className="text-center text-muted-foreground pt-4">No classes scheduled for today.</p>
+                    <div className="glass p-8 rounded-xl text-center">
+                       <p className="text-muted-foreground">No classes scheduled for today.</p>
+                    </div>
                   )}
                 </div>
               </TabsContent>
@@ -81,9 +83,9 @@ const InfoPage: React.FC = () => {
           </h3>
           <div className="space-y-3">
             {campusInfo.events.map((event, index) => (
-              <Card key={index} className="p-4 bg-card border-border">
+              <Card key={index} className="p-4 hover:bg-white/5 transition-colors border-l-4 border-l-accent">
                 <h4 className="font-semibold text-foreground mb-2">{event.title}</h4>
-                <p className="text-sm text-foreground mb-2">{event.description}</p>
+                <p className="text-sm text-foreground mb-2 opacity-90">{event.description}</p>
                 <div className="flex items-center gap-4 text-sm text-muted-foreground">
                   <span className="flex items-center gap-1">
                     <Calendar className="h-4 w-4" />
@@ -107,7 +109,7 @@ const InfoPage: React.FC = () => {
           </h3>
           <div className="space-y-3">
             {campusInfo.facilities.map((facility, index) => (
-              <Card key={index} className="p-4 bg-card border-border">
+              <Card key={index} className="p-4 hover:bg-white/5 transition-colors">
                 <h4 className="font-semibold text-foreground mb-2">{facility.name}</h4>
                 <div className="flex items-center gap-4 text-sm text-muted-foreground">
                   <span className="flex items-center gap-1">
